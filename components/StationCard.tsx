@@ -3,19 +3,15 @@
 import { useAudio } from "@/context/AudioContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { Play, Globe, Star, Info } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { isLocalFavorite, addLocalFavorite, removeLocalFavorite } from "@/lib/local-storage";
 import type { Station } from "@/types/station";
 
 export default function StationCard({ station, onViewDetail }: { station: Station; onViewDetail?: (station: Station) => void }) {
   const { playStation, currentStation } = useAudio();
   const { t } = useLanguage();
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [favOverride, setFavOverride] = useState(() => isLocalFavorite(station.stationuuid));
   const isCurrentlyPlaying = currentStation?.stationuuid === station.stationuuid;
-
-  useEffect(() => {
-    setIsFavorite(isLocalFavorite(station.stationuuid));
-  }, [station.stationuuid]);
 
   const handlePlay = () => {
     playStation({
@@ -26,15 +22,15 @@ export default function StationCard({ station, onViewDetail }: { station: Statio
     });
   };
 
-  const toggleFavorite = (e: React.MouseEvent) => {
+  const toggleFavorite = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isFavorite) {
+    if (favOverride) {
       removeLocalFavorite(station.stationuuid);
     } else {
       addLocalFavorite(station);
     }
-    setIsFavorite(!isFavorite);
-  };
+    setFavOverride(prev => !prev);
+  }, [favOverride, station]);
 
   return (
     <div
@@ -78,9 +74,9 @@ export default function StationCard({ station, onViewDetail }: { station: Statio
           )}
           <button
             onClick={toggleFavorite}
-            className={`p-1 transition-colors ${isFavorite ? "text-[var(--color-star)]" : "text-[var(--color-foreground-muted)] opacity-0 group-hover:opacity-100"}`}
+            className={`p-1 transition-colors ${favOverride ? "text-[var(--color-star)]" : "text-[var(--color-foreground-muted)] opacity-0 group-hover:opacity-100"}`}
           >
-            <Star className="w-4 h-4" fill={isFavorite ? "currentColor" : "none"} />
+            <Star className="w-4 h-4" fill={favOverride ? "currentColor" : "none"} />
           </button>
         </div>
       </div>

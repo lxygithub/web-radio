@@ -90,7 +90,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
         name: station.name,
         url: station.url,
         favicon: station.favicon,
-      } as any);
+      });
     },
     []
   );

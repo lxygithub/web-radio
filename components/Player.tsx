@@ -13,20 +13,13 @@ import {
   VolumeX,
   Star,
 } from "lucide-react";
-import { useState, useEffect } from "react";
 import { isLocalFavorite, addLocalFavorite, removeLocalFavorite } from "@/lib/local-storage";
 
 export default function Player() {
   const { currentStation, isPlaying, volume, isMuted, signalStrength, togglePlay, setVolume, toggleMute } =
     useAudio();
   const { t } = useLanguage();
-  const [isFavorite, setIsFavorite] = useState(false);
-
-  useEffect(() => {
-    if (currentStation) {
-      setIsFavorite(isLocalFavorite(currentStation.stationuuid));
-    }
-  }, [currentStation?.stationuuid]);
+  const isFavorite = currentStation ? isLocalFavorite(currentStation.stationuuid) : false;
 
   if (!currentStation) {
     return (
@@ -68,9 +61,13 @@ export default function Player() {
             if (isFavorite) {
               removeLocalFavorite(currentStation.stationuuid);
             } else {
-              addLocalFavorite(currentStation as any);
+              addLocalFavorite({
+                stationuuid: currentStation.stationuuid,
+                name: currentStation.name,
+                url: currentStation.url,
+                favicon: currentStation.favicon,
+              });
             }
-            setIsFavorite(!isFavorite);
           }}
           className={`ml-1 transition-colors ${
             isFavorite

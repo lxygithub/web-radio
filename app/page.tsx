@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import StationList from "@/components/StationList";
 import StationDetail from "@/components/StationDetail";
@@ -18,6 +18,7 @@ export default function Home() {
   const [loadingTrending, setLoadingTrending] = useState(true);
   const [error, setError] = useState("");
   const [detailStation, setDetailStation] = useState<Station | null>(null);
+  const fetchedRef = useRef(false);
 
   const fetchPopular = useCallback(() => {
     setLoading(true);
@@ -32,6 +33,8 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
     fetchPopular();
   }, [fetchPopular]);
 

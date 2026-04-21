@@ -1,13 +1,12 @@
 // Client-side favorites and history management (localStorage fallback for dev)
-import type { Station } from "@/types/station";
 
 interface LocalFavorite {
   stationuuid: string;
   name: string;
   url: string;
   favicon: string;
-  countrycode: string;
-  tags: string;
+  countrycode?: string;
+  tags?: string;
 }
 
 interface LocalHistory {
@@ -30,7 +29,17 @@ export function getLocalFavorites(): LocalFavorite[] {
   }
 }
 
-export function addLocalFavorite(station: Station) {
+interface StationPick {
+  stationuuid: string;
+  name: string;
+  url: string;
+  url_resolved?: string;
+  favicon: string;
+  countrycode?: string;
+  tags?: string;
+}
+
+export function addLocalFavorite(station: StationPick) {
   const favorites = getLocalFavorites();
   if (!favorites.find((f) => f.stationuuid === station.stationuuid)) {
     favorites.push({
@@ -58,7 +67,7 @@ export function isLocalFavorite(stationUuid: string): boolean {
   return getLocalFavorites().some((f) => f.stationuuid === stationUuid);
 }
 
-export function addLocalHistory(station: Station) {
+export function addLocalHistory(station: StationPick) {
   const history = getLocalHistory();
   history.unshift({
     stationuuid: station.stationuuid,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { Clock, Radio, Trash2 } from "lucide-react";
 import { getLocalHistory, clearLocalHistory } from "@/lib/local-storage";
 import { useAudio } from "@/context/AudioContext";
@@ -19,16 +19,15 @@ interface LocalHist {
 export default function HistoryPage() {
   const { user } = useAuth();
   const { playStation } = useAudio();
-  const { t, locale } = useLanguage();
-  const [history, setHistory] = useState<LocalHist[]>([]);
+  const { t } = useLanguage();
+  const [history, setHistory] = useState<LocalHist[]>(() => getLocalHistory());
+  const [now, setNow] = useState(() => Date.now());
 
-  const loadHistory = useCallback(() => {
+  const handleClear = () => {
+    clearLocalHistory();
     setHistory(getLocalHistory());
-  }, []);
-
-  useEffect(() => {
-    loadHistory();
-  }, [loadHistory]);
+    setNow(Date.now());
+  };
 
   const handlePlay = (item: LocalHist) => {
     playStation({
@@ -40,7 +39,7 @@ export default function HistoryPage() {
   };
 
   const formatTime = (ts: number) => {
-    const diff = Date.now() - ts;
+    const diff = now - ts;
     const mins = Math.floor(diff / 60000);
     if (mins < 60) return `${mins}${t("minutesAgo")}`;
     const hours = Math.floor(mins / 60);
@@ -58,7 +57,7 @@ export default function HistoryPage() {
         </div>
         {history.length > 0 && (
           <button
-            onClick={() => { clearLocalHistory(); loadHistory(); }}
+            onClick={handleClear}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-[var(--color-foreground-muted)] hover:text-red-400 hover:bg-red-500/10 transition-colors"
           >
             <Trash2 className="w-3.5 h-3.5" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { Star, Radio } from "lucide-react";
 import { getLocalFavorites, removeLocalFavorite } from "@/lib/local-storage";
 import { useAudio } from "@/context/AudioContext";
@@ -13,27 +13,19 @@ interface LocalFav {
   name: string;
   url: string;
   favicon: string;
-  countrycode: string;
-  tags: string;
+  countrycode?: string;
+  tags?: string;
 }
 
 export default function FavoritesPage() {
   const { user } = useAuth();
   const { playStation } = useAudio();
   const { t } = useLanguage();
-  const [favorites, setFavorites] = useState<LocalFav[]>([]);
-
-  const loadFavorites = useCallback(() => {
-    setFavorites(getLocalFavorites());
-  }, []);
-
-  useEffect(() => {
-    loadFavorites();
-  }, [loadFavorites]);
+  const [favorites, setFavorites] = useState<LocalFav[]>(() => getLocalFavorites());
 
   const handleRemove = (stationUuid: string) => {
     removeLocalFavorite(stationUuid);
-    loadFavorites();
+    setFavorites(getLocalFavorites());
   };
 
   const handlePlay = (fav: LocalFav) => {

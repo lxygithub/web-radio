@@ -1,21 +1,23 @@
 import type { D1Database } from "@cloudflare/workers-types";
 import type { User } from "@/types/station";
 
-// D1 database access - abstracted for easy migration
-let db: D1Database | null = null;
-
-export function getDB(): D1Database | null {
-  return db;
-}
-
-export function initDB(database: D1Database) {
-  db = database;
+// Get D1 database binding lazily from Cloudflare request context
+// In Cloudflare Workers, the env (including D1 bindings) is stored in AsyncLocalStorage
+// by OpenNext's runWithCloudflareRequestContext wrapper
+function getDB(): D1Database | null {
+  try {
+    const ctx = Reflect.get(globalThis, Symbol.for("__cloudflare-context__")) as { env: { DB: D1Database } } | undefined;
+    return ctx?.env?.DB ?? null;
+  } catch {
+    return null;
+  }
 }
 
 // User operations
 export async function findUserByUsername(
   username: string
 ): Promise<User | null> {
+  const db = getDB();
   if (!db) return null;
   const result = await db
     .prepare("SELECT id, username, email, created_at FROM users WHERE username = ?")
@@ -25,6 +27,7 @@ export async function findUserByUsername(
 }
 
 export async function findUserByEmail(email: string): Promise<User | null> {
+  const db = getDB();
   if (!db) return null;
   const result = await db
     .prepare("SELECT id, username, email, created_at FROM users WHERE email = ?")
@@ -34,6 +37,7 @@ export async function findUserByEmail(email: string): Promise<User | null> {
 }
 
 export async function getUserPasswordHash(userId: string): Promise<string | null> {
+  const db = getDB();
   if (!db) return null;
   const result = await db
     .prepare("SELECT password_hash FROM users WHERE id = ?")
@@ -49,6 +53,7 @@ export async function createUser(
   passwordHash: string,
   createdAt: number
 ): Promise<boolean> {
+  const db = getDB();
   if (!db) return false;
   const result = await db
     .prepare(
@@ -61,6 +66,7 @@ export async function createUser(
 
 // Favorites operations
 export async function getFavorites(userId: string) {
+  const db = getDB();
   if (!db) return [];
   const results = await db
     .prepare(
@@ -80,6 +86,7 @@ export async function addFavorite(
   stationFavicon: string | null,
   createdAt: number
 ): Promise<boolean> {
+  const db = getDB();
   if (!db) return false;
   const result = await db
     .prepare(
@@ -91,6 +98,7 @@ export async function addFavorite(
 }
 
 export async function removeFavorite(userId: string, stationUuid: string): Promise<boolean> {
+  const db = getDB();
   if (!db) return false;
   const result = await db
     .prepare("DELETE FROM favorites WHERE user_id = ? AND station_uuid = ?")
@@ -101,6 +109,7 @@ export async function removeFavorite(userId: string, stationUuid: string): Promi
 
 // History operations
 export async function getHistory(userId: string, limit = 50) {
+  const db = getDB();
   if (!db) return [];
   const results = await db
     .prepare(
@@ -119,6 +128,7 @@ export async function addHistory(
   stationUrl: string,
   playedAt: number
 ): Promise<boolean> {
+  const db = getDB();
   if (!db) return false;
   const result = await db
     .prepare(

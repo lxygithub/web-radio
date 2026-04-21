@@ -1,7 +1,7 @@
 "use client";
 
 import { Search, Loader2, AlertCircle } from "lucide-react";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import StationList from "@/components/StationList";
 import StationDetail from "@/components/StationDetail";
 import { useLanguage } from "@/context/LanguageContext";

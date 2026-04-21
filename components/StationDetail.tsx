@@ -3,7 +3,7 @@
 import { useAudio } from "@/context/AudioContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { X, Play, Globe, Radio, Tag, Activity, Wifi, Music2 } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useCallback } from "react";
 import type { Station } from "@/types/station";
 
 interface StationDetailProps {
