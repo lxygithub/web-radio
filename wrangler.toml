@@ -1,9 +1,13 @@
 name = "web-radio"
 compatibility_date = "2025-04-01"
 compatibility_flags = ["nodejs_compat"]
+main = ".open-next/worker.js"
+
+[assets]
+directory = ".open-next/assets"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "web-radio"
-database_id = ""
+database_id = "2f29a0bf-929a-4719-89a9-e17817447525"
 migrations_dir = "migrations"
