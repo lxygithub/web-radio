@@ -1,65 +1,135 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import StationList from "@/components/StationList";
+import StationDetail from "@/components/StationDetail";
+import CategoryNav from "@/components/CategoryNav";
+import { useLanguage } from "@/context/LanguageContext";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { getStationsByVotes, getStationsByClicks } from "@/lib/radio-browser";
+import type { Station } from "@/types/station";
 
 export default function Home() {
+  const { t } = useLanguage();
+  const [stations, setStations] = useState<Station[]>([]);
+  const [trending, setTrending] = useState<Station[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingTrending, setLoadingTrending] = useState(true);
+  const [error, setError] = useState("");
+  const [detailStation, setDetailStation] = useState<Station | null>(null);
+
+  const fetchPopular = useCallback(() => {
+    setLoading(true);
+    setError("");
+    getStationsByVotes(100)
+      .then((data) => setStations(data))
+      .catch((e) => {
+        console.error("Failed to fetch stations:", e);
+        setError("Failed to load stations. Please try again.");
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetchPopular();
+  }, [fetchPopular]);
+
+  useEffect(() => {
+    getStationsByClicks(20)
+      .then((data) => setTrending(data))
+      .catch((e) => console.error("Failed to fetch trending:", e))
+      .finally(() => setLoadingTrending(false));
+  }, []);
+
+  const handleViewDetail = useCallback((station: Station) => {
+    setDetailStation(station);
+  }, []);
+
+  useKeyboardShortcuts(stations);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div>
+      <header className="mb-8">
+        <h1 className="text-2xl font-bold text-white">{t("discover")}</h1>
+        <p className="text-[var(--color-foreground-muted)] mt-1">
+          {t("discoverSubtitle")}
+        </p>
+        <p className="text-xs text-[var(--color-foreground-muted)] mt-1 opacity-60">
+          {t("shortcutsHint")}
+        </p>
+      </header>
+
+      <CategoryNav />
+
+      {/* Popular Stations */}
+      <section className="mt-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-white">{t("popularStations")}</h2>
+          {error && (
+            <button
+              onClick={fetchPopular}
+              className="flex items-center gap-1.5 text-sm text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] transition-colors"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              <RefreshCw className="w-3.5 h-3.5" />
+              Retry
+            </button>
+          )}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 text-[var(--color-primary)] animate-spin" />
+          </div>
+        ) : error ? (
+          <div className="flex items-center gap-2 p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+        ) : (
+          <StationList stations={stations} onViewDetail={handleViewDetail} />
+        )}
+      </section>
+
+      {/* Trending Stations */}
+      {trending.length > 0 && (
+        <section className="mt-10">
+          <h2 className="text-lg font-semibold text-white mb-4">Trending Now</h2>
+          {loadingTrending ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 text-[var(--color-primary)] animate-spin" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              {trending.map((station) => (
+                <TrendingCard
+                  key={station.stationuuid}
+                  station={station}
+                  onClick={() => handleViewDetail(station)}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      <StationDetail station={detailStation} onClose={() => setDetailStation(null)} />
     </div>
+  );
+}
+
+function TrendingCard({ station, onClick }: { station: Station; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="group p-3 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-[var(--color-primary)]/30 transition-all text-left"
+    >
+      <div className="w-10 h-10 rounded-md bg-[var(--color-background)] flex items-center justify-center overflow-hidden mb-2">
+        {station.favicon ? (
+          <img src={station.favicon} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+        ) : null}
+      </div>
+      <p className="text-xs font-medium text-white truncate group-hover:text-[var(--color-primary)] transition-colors">{station.name}</p>
+      <p className="text-[10px] text-[var(--color-foreground-muted)] mt-0.5">{station.votes} votes</p>
+    </button>
   );
 }
